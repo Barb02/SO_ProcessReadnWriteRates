@@ -5,6 +5,8 @@ if [[ $# < 1 ]] ; then
     exit 1;
 fi
 
+start=$(date +%s)
+
 regex='.*'
 
 while getopts "c:" options; do
@@ -50,6 +52,5 @@ do
 
 done
 
-
-t=$(echo -e "$s"  | awk -v reg="$regex" '$1~reg'| sort -t, -nr -k4)
+t=$(echo -e "$s"  | awk -F "," -v reg="$regex" 'match($1, reg)' | sort -t, -nr -k 4,4 )
 echo -e "COMM,USER,PID,READB,WRITEB,RATER,RATEW,DATE\n$t" | column -s, -t
