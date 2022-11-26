@@ -8,12 +8,16 @@ fi
 start=$(date +%s)
 
 regex='.*'
+user_regex='.*'
 
-while getopts "c:" options; do
+while getopts "c:u:" options; do
 	case "${options}" in 
 		c) 
 			regex=${OPTARG}
-			;; 
+			;;
+		u)
+			user_regex=${OPTARG}
+			;;
 	esac
 done
 
@@ -52,5 +56,5 @@ do
 
 done
 
-t=$(echo -e "$s"  | awk -F "," -v reg="$regex" 'match($1, reg)' | sort -t, -nr -k 4,4 )
+t=$(echo -e "$s"  | awk -F "," -v reg="$regex" -v user="$user_regex" 'match($1, reg) && match($2, user)' | sort -t, -n -k 4,4 )
 echo -e "COMM,USER,PID,READB,WRITEB,RATER,RATEW,DATE\n$t" | column -s, -t
