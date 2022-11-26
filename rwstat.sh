@@ -5,19 +5,29 @@ if [[ $# < 1 ]] ; then
     exit 1;
 fi
 
-start=$(date +%s)
-
 regex='.*'
 user_regex='.*'
+lines=$(($(ls -v /proc/ | grep '[0-9]' | wc -l) * 2)) # multiplicar por 2 só para caso sejam abertos processos a meio
+column=4 # coluna para dar sort  
+reverse=0
 
-while getopts "c:u:" options; do
-	case "${options}" in 
-		c) 
+while getopts "wrc:u:p:" options; do
+  case "${options}" in 
+    c) 
 			regex=${OPTARG}
 			;;
 		u)
 			user_regex=${OPTARG}
 			;;
+		p)
+			lines=${OPTARG}
+			;;
+    w)
+      column=5
+      ;;
+    r)
+      reverse=1
+      ;;
 	esac
 done
 
@@ -52,9 +62,30 @@ do
     rchar=$((rchar_after-rchar_before[$pid]))
     wchar=$((wchar_after-wchar_before[$pid]))
     
-    s+="\n$(printf "%s,%s,%s,%s,%s,%s,%s,%s\n" "$comm" "$user" "$pid" "$rchar" "$wchar" "$(awk "BEGIN {print $rchar/${@: -1}}")" "$(awk "BEGIN {print $wchar/${@: -1}}")" "$date")"
-
+    s+="\n$(echo -e "$comm,$user,$pid,$rchar,$wchar,$(awk "BEGIN {print $rchar/${@: -1}}"),$(awk "BEGIN {print $wchar/${@: -1}}"),$date")"
+    
 done
 
-t=$(echo -e "$s"  | awk -F "," -v reg="$regex" -v user="$user_regex" 'match($1, reg) && match($2, user)' | sort -t, -n -k 4,4 )
-echo -e "COMM,USER,PID,READB,WRITEB,RATER,RATEW,DATE\n$t" | column -s, -t
+format=$(echo -e "$s" | awk -F "," -v reg="$regex" -v user="$user_regex" 'match($1, reg) && match($2, user)')
+
+#sorting
+
+echo $column $reverse
+
+if [[ $column -eq 4 ]];then
+  if [[ $reverse -eq 0 ]];then
+    format=$(echo -e "$format" | sort -n -t, -k $column,$column)
+  else
+    format=$(echo -e "$format" | sort -nr -t, -k $column,$column)
+  fi
+else
+  if [[ $reverse -eq 0 ]];then
+    format=$(echo -e "$format" | sort -nr -t, -k $column,$column)
+  else
+    format=$(echo -e "$format" | sort -n -t, -k $column,$column)
+  fi
+fi
+
+format=$(echo -e "$format" | head -n $lines)
+
+echo -e "COMM,USER,PID,READB,WRITEB,RATER,RATEW,DATE\n$format" | column -s, -t
