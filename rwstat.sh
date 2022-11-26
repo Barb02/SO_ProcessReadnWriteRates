@@ -9,7 +9,7 @@ regex='.*'
 user_regex='.*'
 lines=$(($(ls -v /proc/ | grep '[0-9]' | wc -l) * 2)) # multiplicar por 2 só para caso sejam abertos processos a meio
 column=4 # coluna para dar sort  
-reverse=0
+reverse=1
 
 while getopts "wrc:u:p:" options; do
   case "${options}" in 
@@ -24,9 +24,18 @@ while getopts "wrc:u:p:" options; do
 			;;
     w)
       column=5
+      if [[ $reverse -eq 1 ]];then   # temos de dar reverse no -w pois o $reverse é 1 by default
+        reverse=0
+      else
+        reverse=1
+      fi
       ;;
     r)
-      reverse=1
+      if [[ $reverse -eq 1 ]];then
+        reverse=0
+      else
+        reverse=1
+      fi
       ;;
 	esac
 done
@@ -70,20 +79,10 @@ format=$(echo -e "$s" | awk -F "," -v reg="$regex" -v user="$user_regex" 'match(
 
 #sorting
 
-echo $column $reverse
-
-if [[ $column -eq 4 ]];then
-  if [[ $reverse -eq 0 ]];then
-    format=$(echo -e "$format" | sort -n -t, -k $column,$column)
-  else
-    format=$(echo -e "$format" | sort -nr -t, -k $column,$column)
-  fi
+if [[ $reverse -eq 1 ]];then
+  format=$(echo -e "$format" | sort -n -t, -k $column,$column)
 else
-  if [[ $reverse -eq 0 ]];then
-    format=$(echo -e "$format" | sort -nr -t, -k $column,$column)
-  else
-    format=$(echo -e "$format" | sort -n -t, -k $column,$column)
-  fi
+  format=$(echo -e "$format" | sort -nr -t, -k $column,$column)
 fi
 
 format=$(echo -e "$format" | head -n $lines)
