@@ -39,14 +39,14 @@ while getopts "wrc:u:p:s:e:m:M:" options; do
       fi
       ;;
     c) 
-			regex=${OPTARG}
-			;;
-		u)
-			user_regex=${OPTARG}
-			;;
-		p)
-			lines=${OPTARG}
-			;;
+      regex=${OPTARG}
+      ;;
+    u)
+      user_regex=${OPTARG}
+      ;;
+    p)
+      lines=${OPTARG}
+      ;;
     s)
       data_minima=$(date -d "${OPTARG}" +%s)
       ;;
@@ -59,7 +59,7 @@ while getopts "wrc:u:p:s:e:m:M:" options; do
     M)
       pid_maximo=${OPTARG}
       ;;
-	esac
+esac
 done
 
 for pid in $(ls -v /proc/ | grep '[0-9]')
