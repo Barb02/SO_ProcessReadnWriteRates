@@ -1,27 +1,28 @@
 #!/bin/bash
 
 if [[ $# < 1 ]] ; then
-    echo "Erro, indique o número de segundos que serão usados para calcular as taxas de I/O." >&2; 
-    exit 1;
+    echo "Erro, indique o número de segundos que serão usados para calcular as taxas de I/O." >&2
+    exit 1
 fi
+
+if ! [[ "${@: -1}" =~ ^[0-9]+$ ]]; then  # verificar se o ultimo argumento é um int
+  echo "O último argumento tem de ser um int" >&2
+  exit 1
+fi
+
 
 regex='.*'
 user_regex='.*'
 lines=$(($(ls -v /proc/ | grep '[0-9]' | wc -l) * 2)) # multiplicar por 2 só para caso sejam abertos processos a meio
 column=4 # coluna para dar sort  
 reverse=1
+data_minima=0
+data_maxima=$(( (2**63)-1 )) # maior int
+pid_minimo=0
+pid_maximo=$(( (2**63)-1 )) # maior int
 
-while getopts "wrc:u:p:" options; do
-  case "${options}" in 
-    c) 
-			regex=${OPTARG}
-			;;
-		u)
-			user_regex=${OPTARG}
-			;;
-		p)
-			lines=${OPTARG}
-			;;
+while getopts "wrc:u:p:s:e:m:M:" options; do
+  case "${options}" in
     w)
       column=5
       if [[ $reverse -eq 1 ]];then   # temos de dar reverse no -w pois o $reverse é 1 by default
@@ -36,6 +37,27 @@ while getopts "wrc:u:p:" options; do
       else
         reverse=1
       fi
+      ;;
+    c) 
+			regex=${OPTARG}
+			;;
+		u)
+			user_regex=${OPTARG}
+			;;
+		p)
+			lines=${OPTARG}
+			;;
+    s)
+      data_minima=$(date -d "${OPTARG}" +%s)
+      ;;
+    e)
+      data_maxima=$(date -d "${OPTARG}" +%s)
+      ;;
+    m)
+      pid_minimo=${OPTARG}
+      ;;
+    M)
+      pid_maximo=${OPTARG}
       ;;
 	esac
 done
@@ -63,7 +85,6 @@ do
 
     user=$(ls -l /proc/$pid/io | awk '{print $3}')
     date=$(ls -l /proc/$pid/io | awk '{print $6,$7,$8}')
-    #ds = $(date -d 'date' +%s)
     comm=$(cat /proc/$pid/comm )
 
     rchar_after=$(cat /proc/$pid/io | sed -n 1p | awk '{print $2}')
@@ -75,9 +96,11 @@ do
     
 done
 
-format=$(echo -e "$s" | awk -F "," -v reg="$regex" -v user="$user_regex" 'match($1, reg) && match($2, user)')
+format=$(echo -e "$s" | \
+         awk -F "," -v reg="$regex" -v user="$user_regex" -v data_minima="$data_minima" -v data_maxima="$data_maxima" -v pid_minimo="$pid_minimo" -v pid_maximo="$pid_maximo" \
+         '{"date -d \""$8"\" +%s" | getline date; \
+         if (match($1, reg) && match($2, user) && date >= data_minima && date <= data_maxima && $3 >= pid_minimo && $3 <= pid_maximo) {print } }')
 
-#sorting
 
 if [[ $reverse -eq 1 ]];then
   format=$(echo -e "$format" | sort -n -t, -k $column,$column)
