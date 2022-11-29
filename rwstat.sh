@@ -94,7 +94,7 @@ do
     wchar=$((wchar_after-wchar_before[$pid]))
     
     if [[ $comm =~ $regex && $user =~ $user_regex && $date_seconds -ge $data_minima && $date_seconds -le $data_maxima && $pid -ge $pid_minimo && $pid -le $pid_maximo ]];then  
-      format+="\n$(echo -e "$comm,$user,$pid,$rchar,$wchar,$(awk "BEGIN {print $rchar/${@: -1}}"),$(awk "BEGIN {print $wchar/${@: -1}}"),$date")"
+      format+="\n$(echo -e "$comm;$user;$pid;$rchar;$wchar;$(awk "BEGIN {print $rchar/${@: -1}}");$(awk "BEGIN {print $wchar/${@: -1}}");$date")"
     fi
 done
 
@@ -105,11 +105,11 @@ done
 
 
 if [[ $reverse -eq 1 ]];then
-  format=$(echo -e "$format" | sort -n -t, -k $column,$column)
+  format=$(echo -e "$format" | sort -n -t ";" -k $column,$column)
 else
-  format=$(echo -e "$format" | sort -nr -t, -k $column,$column)
+  format=$(echo -e "$format" | sort -nr -t ";" -k $column,$column)
 fi
 
 format=$(echo -e "$format" | head -n $lines)
 
-echo -e "COMM,USER,PID,READB,WRITEB,RATER,RATEW,DATE\n$format" | column -s, -t
+echo -e "COMM;USER;PID;READB;WRITEB;RATER;RATEW;DATE\n$format" | column -s ";" -t
