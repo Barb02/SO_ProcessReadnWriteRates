@@ -85,6 +85,7 @@ do
 
     user=$(ls -l /proc/$pid/io | awk '{print $3}')
     date=$(ls -l /proc/$pid/io | awk '{print $6,$7,$8}')
+    date_seconds=$(date +%s -d "$date")
     comm=$(cat /proc/$pid/comm )
 
     rchar_after=$(cat /proc/$pid/io | sed -n 1p | awk '{print $2}')
@@ -92,14 +93,15 @@ do
     rchar=$((rchar_after-rchar_before[$pid]))
     wchar=$((wchar_after-wchar_before[$pid]))
     
-    s+="\n$(echo -e "$comm,$user,$pid,$rchar,$wchar,$(awk "BEGIN {print $rchar/${@: -1}}"),$(awk "BEGIN {print $wchar/${@: -1}}"),$date")"
-    
+    if [[ $comm =~ $regex && $user =~ $user_regex && $date_seconds -ge $data_minima && $date_seconds -le $data_maxima && $pid -ge $pid_minimo && $pid -le $pid_maximo ]];then  
+      format+="\n$(echo -e "$comm,$user,$pid,$rchar,$wchar,$(awk "BEGIN {print $rchar/${@: -1}}"),$(awk "BEGIN {print $wchar/${@: -1}}"),$date")"
+    fi
 done
 
-format=$(echo -e "$s" | \
-         awk -F "," -v reg="$regex" -v user="$user_regex" -v data_minima="$data_minima" -v data_maxima="$data_maxima" -v pid_minimo="$pid_minimo" -v pid_maximo="$pid_maximo" \
-         '{"date -d \""$8"\" +%s" | getline date; \
-         if (match($1, reg) && match($2, user) && date >= data_minima && date <= data_maxima && $3 >= pid_minimo && $3 <= pid_maximo) {print } }')
+#format=$(echo -e "$s" | \
+#         awk -F "," -v reg="$regex" -v user="$user_regex" -v data_minima="$data_minima" -v data_maxima="$data_maxima" -v pid_minimo="$pid_minimo" -v pid_maximo="$pid_maximo" \
+#         '{"date -d \""$8"\" +%s" | getline date; \
+#         if (match($1, reg) && match($2, user) && date >= data_minima && date <= data_maxima && $3 >= pid_minimo && $3 <= pid_maximo) {print } }')
 
 
 if [[ $reverse -eq 1 ]];then
