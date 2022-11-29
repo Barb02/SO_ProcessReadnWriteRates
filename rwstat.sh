@@ -5,8 +5,8 @@ if [[ $# < 1 ]] ; then
     exit 1
 fi
 
-if ! [[ "${@: -1}" =~ ^[0-9]+$ ]]; then  # verificar se o ultimo argumento é um int
-    echo "O último argumento tem de ser um int" >&2
+if ! [[ "${@: -1}" =~ ^[0-9]+$ && ${@: -1} > 0 ]]; then  # verificar se o ultimo argumento é um int
+    echo "O último argumento tem de ser um inteiro positivo" >&2
     exit 1
 fi
 
