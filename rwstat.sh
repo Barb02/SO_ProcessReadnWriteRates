@@ -6,10 +6,9 @@ if [[ $# < 1 ]] ; then
 fi
 
 if ! [[ "${@: -1}" =~ ^[0-9]+$ && ${@: -1} > 0 ]]; then  # verificar se o ultimo argumento é um int
-    echo "O último argumento tem de ser um inteiro positivo" >&2
+    echo "O último argumento tem de ser um inteiro positivo." >&2
     exit 1
 fi
-
 
 regex='.*'
 user_regex='.*'
@@ -60,7 +59,8 @@ while getopts ":wrc:u:p:s:e:m:M:" options; do
       pid_maximo=${OPTARG}
       ;;
     ?) 
-          echo "Opção inválida"
+          echo -e "Opção inválida.\nUSO: sudo $0 [-w] [-r] [-c \"regex\"] [-u \"regex\"] [-p numproc] \
+[-s datamin] [-e datamax] [-m pidmin] [-M pidmax] nsec" >&2
           exit 1
           ;;
 esac
@@ -101,12 +101,6 @@ do
       format+="\n$(echo -e "$comm;$user;$pid;$rchar;$wchar;$(awk "BEGIN {print $rchar/${@: -1}}");$(awk "BEGIN {print $wchar/${@: -1}}");$date")"
     fi
 done
-
-#format=$(echo -e "$s" | \
-#         awk -F "," -v reg="$regex" -v user="$user_regex" -v data_minima="$data_minima" -v data_maxima="$data_maxima" -v pid_minimo="$pid_minimo" -v pid_maximo="$pid_maximo" \
-#         '{"date -d \""$8"\" +%s" | getline date; \
-#         if (match($1, reg) && match($2, user) && date >= data_minima && date <= data_maxima && $3 >= pid_minimo && $3 <= pid_maximo) {print } }')
-
 
 if [[ $reverse -eq 1 ]];then
   format=$(echo -e "$format" | sort -n -t ";" -k $column,$column)
