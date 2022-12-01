@@ -88,7 +88,7 @@ do
     fi
 
     user=$(ls -l /proc/$pid/io | awk '{print $3}')
-    date=$(ls -l /proc/$pid/io | awk '{print $6,$7,$8}')
+    date=$(ps -p $pid -o lstart | tail -n1 | awk '{print $2,$3,substr($4,1,5)}')
     date_seconds=$(date +%s -d "$date")
     name=$(cat /proc/$pid/comm )
 
