@@ -1,12 +1,19 @@
 #!/bin/bash
 
+function check_arg_is_num(){      
+    if ! [[ $1 =~ ^[0-9]+$ && $1 > 0 ]] ; then   # verificar se o argumento é válido
+      echo "Erro. Argumento deve ser um número inteiro positivo." >&2
+      exit 1
+    fi
+}
+
 if [[ $# < 1 ]] ; then
-    echo "Erro, indique o número de segundos que serão usados para calcular as taxas de I/O." >&2
+    echo "Erro. Indique o número de segundos que serão usados para calcular as taxas de I/O." >&2
     exit 1
 fi
 
-if ! [[ "${@: -1}" =~ ^[0-9]+$ && ${@: -1} > 0 ]]; then  # verificar se o ultimo argumento é um int
-    echo "O último argumento tem de ser um inteiro positivo." >&2
+if ! [[ ${@: -1} =~ ^[0-9]+$ && ${@: -1} > 0 ]]; then  # verificar se o ultimo argumento é válido
+    echo "Erro. O último argumento tem de ser um inteiro positivo." >&2
     exit 1
 fi
 
@@ -24,7 +31,7 @@ while getopts ":wrc:u:p:s:e:m:M:" options; do
   case "${options}" in
     w)
       column=7
-      if [[ $reverse -eq 1 ]];then   # temos de dar reverse no -w pois o $reverse é 1 by default
+      if [[ $reverse -eq 1 ]];then   # temos de dar reverse no -w pois o $reverse é 1 por defeito
         reverse=0
       else
         reverse=1
@@ -45,18 +52,24 @@ while getopts ":wrc:u:p:s:e:m:M:" options; do
       ;;
     p)
       lines=${OPTARG}
+      check_arg_is_num $lines
       ;;
     s)
       minimum_date=$(date -d "${OPTARG}" +%s)
+      if [[ $? == 1 ]]; then 
+        exit 1
+      fi
       ;;
     e)
       maximum_date=$(date -d "${OPTARG}" +%s)
       ;;
     m)
       minimum_pid=${OPTARG}
+      check_arg_is_num $minimum_pid
       ;;
     M)
       maximum_pid=${OPTARG}
+      check_arg_is_num $maximum_pid
       ;;
     ?) 
           echo -e "Opção inválida.\nUSO: sudo $0 [-w] [-r] [-c \"regex\"] [-u \"regex\"] [-p numproc] \
@@ -65,6 +78,11 @@ while getopts ":wrc:u:p:s:e:m:M:" options; do
           ;;
 esac
 done
+
+if [[ ${OPTIND} != $# ]] ; then
+    echo "Erro, faltam argumentos." >&2
+    exit 1
+fi
 
 for pid in $(ls -v /proc/ | grep '[0-9]')
 do
