@@ -23,7 +23,7 @@ pid_maximo=$(( (2**63)-1 )) # maior int
 while getopts ":wrc:u:p:s:e:m:M:" options; do
   case "${options}" in
     w)
-      column=5
+      column=7
       if [[ $reverse -eq 1 ]];then   # temos de dar reverse no -w pois o $reverse é 1 by default
         reverse=0
       else
