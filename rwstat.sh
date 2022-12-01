@@ -12,13 +12,13 @@ fi
 
 regex='.*'
 user_regex='.*'
-lines=$(($(ls -v /proc/ | grep '[0-9]' | wc -l) * 2)) # multiplicar por 2 só para caso sejam abertos processos a meio
-column=4 # coluna para dar sort  
-reverse=1
-data_minima=0
-data_maxima=$(( (2**63)-1 )) # maior int
-pid_minimo=0
-pid_maximo=$(( (2**63)-1 )) # maior int
+column=4                      # coluna para dar sort  
+reverse=1                     # 1 -> sort de menor para maior | 0 -> sort de maior para menor
+minimum_date=0
+maximum_date=$(( (2**63)-1 )) # maior int
+minimum_pid=0
+maximum_pid=$(( (2**63)-1 ))  # maior int
+lines=$(($(ls -v /proc/ | grep '[0-9]' | wc -l) * 2))
 
 while getopts ":wrc:u:p:s:e:m:M:" options; do
   case "${options}" in
@@ -47,16 +47,16 @@ while getopts ":wrc:u:p:s:e:m:M:" options; do
       lines=${OPTARG}
       ;;
     s)
-      data_minima=$(date -d "${OPTARG}" +%s)
+      minimum_date=$(date -d "${OPTARG}" +%s)
       ;;
     e)
-      data_maxima=$(date -d "${OPTARG}" +%s)
+      maximum_date=$(date -d "${OPTARG}" +%s)
       ;;
     m)
-      pid_minimo=${OPTARG}
+      minimum_pid=${OPTARG}
       ;;
     M)
-      pid_maximo=${OPTARG}
+      maximum_pid=${OPTARG}
       ;;
     ?) 
           echo -e "Opção inválida.\nUSO: sudo $0 [-w] [-r] [-c \"regex\"] [-u \"regex\"] [-p numproc] \
@@ -78,7 +78,7 @@ do
 
 done
 
-sleep ${@: -1}  # busca o último argumento
+sleep ${@: -1}  # último argumento
 
 for pid in $(ls -v /proc/ | grep '[0-9]')
 do
@@ -90,15 +90,15 @@ do
     user=$(ls -l /proc/$pid/io | awk '{print $3}')
     date=$(ls -l /proc/$pid/io | awk '{print $6,$7,$8}')
     date_seconds=$(date +%s -d "$date")
-    comm=$(cat /proc/$pid/comm )
+    name=$(cat /proc/$pid/comm )
 
     rchar_after=$(cat /proc/$pid/io | sed -n 1p | awk '{print $2}')
     wchar_after=$(cat /proc/$pid/io | sed -n 2p | awk '{print $2}')    
     rchar=$((rchar_after-rchar_before[$pid]))
     wchar=$((wchar_after-wchar_before[$pid]))
     
-    if [[ $comm =~ $regex && $user =~ $user_regex && $date_seconds -ge $data_minima && $date_seconds -le $data_maxima && $pid -ge $pid_minimo && $pid -le $pid_maximo ]];then  
-      format+="\n$(echo -e "$comm;$user;$pid;$rchar;$wchar;$(awk "BEGIN {print $rchar/${@: -1}}");$(awk "BEGIN {print $wchar/${@: -1}}");$date")"
+    if [[ $name =~ $regex && $user =~ $user_regex && $date_seconds -ge $minimum_date && $date_seconds -le $maximum_date && $pid -ge $minimum_pid && $pid -le $maximum_pid ]];then  
+      format+="\n$(echo -e "$name;$user;$pid;$rchar;$wchar;$(awk "BEGIN {print $rchar/${@: -1}}");$(awk "BEGIN {print $wchar/${@: -1}}");$date")"
     fi
 done
 
