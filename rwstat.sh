@@ -19,8 +19,8 @@ fi
 
 regex='.*'
 user_regex='.*'
-column=4                      # coluna para dar sort  
-reverse=1                     # 1 -> sort de menor para maior | 0 -> sort de maior para menor
+column=6                      # coluna para dar sort  
+reverse=1                     
 minimum_date=0
 maximum_date=$(( (2**63)-1 )) # maior int
 minimum_pid=0
@@ -31,18 +31,9 @@ while getopts ":wrc:u:p:s:e:m:M:" options; do
   case "${options}" in
     w)
       column=7
-      if [[ $reverse -eq 1 ]];then   # temos de dar reverse no -w pois o $reverse é 1 por defeito
-        reverse=0
-      else
-        reverse=1
-      fi
       ;;
     r)
-      if [[ $reverse -eq 1 ]];then
-        reverse=0
-      else
-        reverse=1
-      fi
+      reverse=0
       ;;
     c) 
       regex=${OPTARG}
@@ -128,9 +119,9 @@ do
 done
 
 if [[ $reverse -eq 1 ]];then
-  format=$(echo -e "$format" | sort -n -t ";" -k $column,$column | tail -n $lines)
-  echo -e "COMM;USER;PID;READB;WRITEB;RATER;RATEW;DATE\n$format" | column -s ";" -t
+  format=$(echo -e "$format" | sort -gr -t ";" -k $column,$column)
+  echo -e "COMM;USER;PID;READB;WRITEB;RATER;RATEW;DATE\n$format" | head -n $(($lines+1)) | column -s ";" -t
 else
-  format=$(echo -e "$format" | sort -nr -t ";" -k $column,$column | head -n $lines)
-  echo -e "COMM;USER;PID;READB;WRITEB;RATER;RATEW;DATE\n$format" | column -s ";" -t
+  format=$(echo -e "$format" | sort -g -t ";" -k $column,$column)
+  echo -e "COMM;USER;PID;READB;WRITEB;RATER;RATEW;DATE$format" | head -n $(($lines+1)) | column -s ";" -t
 fi
