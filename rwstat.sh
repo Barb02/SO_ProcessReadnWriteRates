@@ -25,7 +25,7 @@ minimum_date=0
 maximum_date=$(( (2**63)-1 )) # maior int
 minimum_pid=0
 maximum_pid=$(( (2**63)-1 ))  # maior int
-lines=$(($(ls -v /proc/ | grep '[0-9]' | wc -l) * 2))
+lines=$(($(ls /proc/ | grep '[0-9]' | wc -l) * 2))
 
 while getopts ":wrc:u:p:s:e:m:M:" options; do
   case "${options}" in
