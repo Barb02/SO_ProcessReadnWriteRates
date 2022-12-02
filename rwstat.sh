@@ -62,6 +62,9 @@ while getopts ":wrc:u:p:s:e:m:M:" options; do
       ;;
     e)
       maximum_date=$(date -d "${OPTARG}" +%s)
+      if [[ $? == 1 ]]; then 
+        exit 1
+      fi
       ;;
     m)
       minimum_pid=${OPTARG}
@@ -84,21 +87,26 @@ if [[ ${OPTIND} != $# ]] ; then
     exit 1
 fi
 
-for pid in $(ls -v /proc/ | grep '[0-9]')
+for pid in $(ls /proc/ | grep '[0-9]')
 do
 
     if ! [[ -d "/proc/$pid" ]]; then
         continue    
     fi
+
+    rbf=$(cat /proc/$pid/io 2>/dev/null)
+    if [[ $? == 1 ]]; then 
+        continue
+    fi
     
-    rchar_before[$pid]=$(cat /proc/$pid/io | sed -n 1p | awk '{print $2}')
+    rchar_before[$pid]=$(echo $rbf | sed -n 1p | awk '{print $2}')
     wchar_before[$pid]=$(cat /proc/$pid/io | sed -n 2p | awk '{print $2}')
 
 done
 
 sleep ${@: -1}  # último argumento
 
-for pid in $(ls -v /proc/ | grep '[0-9]')
+for pid in ${!rchar_before[@]}
 do
 
     if ! [[ -d "/proc/$pid" ]]; then
