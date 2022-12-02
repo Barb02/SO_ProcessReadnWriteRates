@@ -1,18 +1,18 @@
 #!/bin/bash
 
 function check_arg_is_num(){      
-    if ! [[ $1 =~ ^[0-9]+$ && $1 > 0 ]] ; then   # verificar se o argumento é válido
+    if ! [[ $1 =~ ^[0-9]+$ && $1 -gt 0 ]] ; then   # verificar se o argumento é válido
       echo "Erro. Argumento deve ser um número inteiro positivo." >&2
       exit 1
     fi
 }
 
-if [[ $# < 1 ]] ; then
+if [[ $# -lt 1 ]] ; then
     echo "Erro. Indique o número de segundos que serão usados para calcular as taxas de I/O." >&2
     exit 1
 fi
 
-if ! [[ ${@: -1} =~ ^[0-9]+$ && ${@: -1} > 0 ]]; then  # verificar se o ultimo argumento é válido
+if ! [[ ${@: -1} =~ ^[0-9]+$ && ${@: -1} -gt 0 ]]; then  # verificar se o ultimo argumento é válido
     echo "Erro. O último argumento tem de ser um inteiro positivo." >&2
     exit 1
 fi
@@ -25,7 +25,7 @@ minimum_date=0
 maximum_date=$(( (2**63)-1 )) # maior int
 minimum_pid=0
 maximum_pid=$(( (2**63)-1 ))  # maior int
-lines=$(($(ls /proc/ | grep '[0-9]' | wc -l) * 2))
+lines=$(($(ls /proc/ | grep '[0-9]' | wc -l) * 2))  # multiplica por 2 pois mais processos podem ser criados entre esse ls e o próximo
 
 while getopts ":wrc:u:p:s:e:m:M:" options; do
   case "${options}" in
@@ -79,7 +79,7 @@ while getopts ":wrc:u:p:s:e:m:M:" options; do
 [-s datamin] [-e datamax] [-m pidmin] [-M pidmax] nsec" >&2
           exit 1
           ;;
-esac
+  esac
 done
 
 if [[ ${OPTIND} != $# ]] ; then
@@ -108,7 +108,6 @@ sleep ${@: -1}  # último argumento
 
 for pid in ${!rchar_before[@]}
 do
-
     if ! [[ -d "/proc/$pid" ]]; then
         continue    
     fi
@@ -129,9 +128,9 @@ do
 done
 
 if [[ $reverse -eq 1 ]];then
-  format=$(echo -e "$format" | sort -n -t ";" -k $column,$column)
+  format=$(echo -e "$format" | sort -n -t ";" -k $column,$column | tail -n $lines)
+  echo -e "COMM;USER;PID;READB;WRITEB;RATER;RATEW;DATE\n$format" | column -s ";" -t
 else
-  format=$(echo -e "$format" | sort -nr -t ";" -k $column,$column)
+  format=$(echo -e "$format" | sort -nr -t ";" -k $column,$column | head -n $lines)
+  echo -e "COMM;USER;PID;READB;WRITEB;RATER;RATEW;DATE\n$format" | column -s ";" -t
 fi
-
-echo -e "COMM;USER;PID;READB;WRITEB;RATER;RATEW;DATE$format" | head -n $(($lines+1)) | column -s ";" -t
